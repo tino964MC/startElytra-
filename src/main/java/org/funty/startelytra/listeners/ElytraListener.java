@@ -22,6 +22,7 @@ import org.funty.startelytra.Main;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.UUID;
 
 public class ElytraListener implements Listener {
@@ -30,6 +31,7 @@ public class ElytraListener implements Listener {
     ItemMeta ElytraMeta = this.Elytra.getItemMeta();
 
     private static final ArrayList<UUID> glider = new ArrayList<>();
+    private static final HashMap<UUID, Integer> boostCount = new HashMap<>();
 
     @EventHandler
     public void onMove(PlayerMoveEvent event) {
@@ -47,6 +49,7 @@ public class ElytraListener implements Listener {
                 if (player.getLocation().add(0, -1, 0).getBlock().getType().equals(Material.AIR)) {
                     if (!(glider.contains(player.getUniqueId()))) {
                         glider.add(uuid);
+                        boostCount.put(uuid, 0); // Boost-Counter zurücksetzen
                         if(player.getName().startsWith(Main.getPlugin().getConfig().getString("Geysermc.Prefix"))){
                                 if(player.getInventory().getChestplate() == null){
                                     this.ElytraMeta.setDisplayName(Main.getPlugin().getConfig().getString("Geysermc.Elytra.DisplayName"));
@@ -71,6 +74,7 @@ public class ElytraListener implements Listener {
 
         if (!(player.getLocation().add(0, -1, 0).getBlock().getType().equals(Material.AIR))) {
             glider.remove(uuid);
+            boostCount.remove(uuid); // Boost-Counter entfernen
             if (event.getPlayer().getGameMode() == GameMode.SURVIVAL) player.setAllowFlight(false);
             if(player.getName().startsWith(Main.getPlugin().getConfig().getString("Geysermc.Prefix"))){
                 if(!(player.getInventory().getChestplate() == null)){
@@ -89,8 +93,18 @@ public class ElytraListener implements Listener {
 
         if (glider.contains(uuid)) {
             event.setCancelled(true);
-            Vector velocity = player.getLocation().getDirection().multiply(2).add(new Vector(0, Double.parseDouble((Main.getPlugin().getConfig().getString("Boost"))), 0));
-            player.setVelocity(velocity);
+            
+            int maxBoosts = Main.getPlugin().getConfig().getInt("maxBoostCount");
+            int currentBoosts = boostCount.getOrDefault(uuid, 0);
+            
+            // Wenn maxBoostCount -1 ist = unbegrenzt
+            if (maxBoosts == -1 || currentBoosts < maxBoosts) {
+                Vector velocity = player.getLocation().getDirection().multiply(2).add(new Vector(0, Double.parseDouble((Main.getPlugin().getConfig().getString("Boost"))), 0));
+                player.setVelocity(velocity);
+                boostCount.put(uuid, currentBoosts + 1);
+            } else {
+                player.sendMessage(ChatColor.translateAlternateColorCodes('&', Main.getPlugin().getConfig().getString("Messages.BoostLimitReached")));
+            }
         }
     }
 
@@ -102,8 +116,18 @@ public class ElytraListener implements Listener {
         if (event.getPlayer().getName().startsWith(Main.getPlugin().getConfig().getString("Geysermc.Prefix"))) {
             if (glider.contains(uuid)) {
                 event.setCancelled(true);
-                Vector velocity = player.getLocation().getDirection().multiply(2).add(new Vector(0, Double.parseDouble((Main.getPlugin().getConfig().getString("Boost"))), 0));
-                player.setVelocity(velocity);
+                
+                int maxBoosts = Main.getPlugin().getConfig().getInt("maxBoostCount");
+                int currentBoosts = boostCount.getOrDefault(uuid, 0);
+                
+                // Wenn maxBoostCount -1 ist = unbegrenzt
+                if (maxBoosts == -1 || currentBoosts < maxBoosts) {
+                    Vector velocity = player.getLocation().getDirection().multiply(2).add(new Vector(0, Double.parseDouble((Main.getPlugin().getConfig().getString("Boost"))), 0));
+                    player.setVelocity(velocity);
+                    boostCount.put(uuid, currentBoosts + 1);
+                } else {
+                    player.sendMessage(ChatColor.translateAlternateColorCodes('&', Main.getPlugin().getConfig().getString("Messages.BoostLimitReached")));
+                }
             }
         }
     }
