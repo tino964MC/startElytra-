@@ -1,10 +1,12 @@
+
 Center:
   X: '0'
   Y: '0'
   Z: '0'
 Radius: '7'
 Boost: '1.5'
-maxBoostCount: '-1'
+# Maximale Anzahl der Boosts pro Flug. -1 = unbegrenzt, 0 = keine Boosts, 2 = 2 Boosts erlaubt
+maxBoostCount: '2'
 
 
 #GeyserMC support.
@@ -31,3 +33,5 @@ Messages:
   NoPermissions: '&4You don´t have Permissions!'
   #if the sender did just /elytra
   NotEnoughArgs: '&4Not Enough Arguments!'
+  #Message when boost limit is reached
+  BoostLimitReached: '&cYou have reached the maximum number of boosts!'
