@@ -1,6 +1,5 @@
 package org.funty.startelytra.listeners;
 
-import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -17,12 +16,10 @@ import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.util.Vector;
 import org.funty.startelytra.Main;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.UUID;
 
 public class ElytraListener implements Listener {
@@ -31,7 +28,6 @@ public class ElytraListener implements Listener {
     ItemMeta ElytraMeta = this.Elytra.getItemMeta();
 
     private static final ArrayList<UUID> glider = new ArrayList<>();
-    private static final HashMap<UUID, Integer> boostCount = new HashMap<>();
 
     @EventHandler
     public void onMove(PlayerMoveEvent event) {
@@ -49,21 +45,20 @@ public class ElytraListener implements Listener {
                 if (player.getLocation().add(0, -1, 0).getBlock().getType().equals(Material.AIR)) {
                     if (!(glider.contains(player.getUniqueId()))) {
                         glider.add(uuid);
-                        boostCount.put(uuid, 0); // Boost-Counter zurücksetzen
-                        if(player.getName().startsWith(Main.getPlugin().getConfig().getString("Geysermc.Prefix"))){
-                                if(player.getInventory().getChestplate() == null){
-                                    this.ElytraMeta.setDisplayName(Main.getPlugin().getConfig().getString("Geysermc.Elytra.DisplayName"));
-                                    this.ElytraMeta.setLore(Collections.singletonList(Main.getPlugin().getConfig().getString("Geysermc.Elytra.Lore")));
-                                    this.ElytraMeta.setUnbreakable(true);
-                                    this.ElytraMeta.addEnchant(Enchantment.DURABILITY, 1000, true);
-                                    this.ElytraMeta.addEnchant(Enchantment.BINDING_CURSE, 1, true);
-                                    this.ElytraMeta.addEnchant(Enchantment.VANISHING_CURSE, 1, true);
-                                    this.ElytraMeta.addItemFlags(new ItemFlag[]{ItemFlag.HIDE_ENCHANTS});
-                                    this.Elytra.setItemMeta(this.ElytraMeta);
-                                    player.getInventory().setChestplate(this.Elytra);
-                                }else {
-                                    player.sendMessage(Main.getPlugin().getConfig().getString("Geysermc.Messages.ChestOccupied"));
-                                }
+                        if (player.getName().startsWith(Main.getPlugin().getConfig().getString("Geysermc.Prefix"))) {
+                            if (player.getInventory().getChestplate() == null) {
+                                this.ElytraMeta.setDisplayName(Main.getPlugin().getConfig().getString("Geysermc.Elytra.DisplayName"));
+                                this.ElytraMeta.setLore(Collections.singletonList(Main.getPlugin().getConfig().getString("Geysermc.Elytra.Lore")));
+                                this.ElytraMeta.setUnbreakable(true);
+                                this.ElytraMeta.addEnchant(Enchantment.DURABILITY, 1000, true);
+                                this.ElytraMeta.addEnchant(Enchantment.BINDING_CURSE, 1, true);
+                                this.ElytraMeta.addEnchant(Enchantment.VANISHING_CURSE, 1, true);
+                                this.ElytraMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+                                this.Elytra.setItemMeta(this.ElytraMeta);
+                                player.getInventory().setChestplate(this.Elytra);
+                            } else {
+                                player.sendMessage(Main.getPlugin().getConfig().getString("Geysermc.Messages.ChestOccupied"));
+                            }
                         }
                         player.setGliding(true);
                         player.setAllowFlight(true);
@@ -74,12 +69,12 @@ public class ElytraListener implements Listener {
 
         if (!(player.getLocation().add(0, -1, 0).getBlock().getType().equals(Material.AIR))) {
             glider.remove(uuid);
-            boostCount.remove(uuid); // Boost-Counter entfernen
-            if (event.getPlayer().getGameMode() == GameMode.SURVIVAL) player.setAllowFlight(false);
-            if(player.getName().startsWith(Main.getPlugin().getConfig().getString("Geysermc.Prefix"))){
-                if(!(player.getInventory().getChestplate() == null)){
-                    if(player.getInventory().getChestplate().equals(this.Elytra)){
-                        player.getInventory().setChestplate((ItemStack)null);
+            if (event.getPlayer().getGameMode() == GameMode.SURVIVAL)
+                player.setAllowFlight(false);
+            if (player.getName().startsWith(Main.getPlugin().getConfig().getString("Geysermc.Prefix"))) {
+                if (!(player.getInventory().getChestplate() == null)) {
+                    if (player.getInventory().getChestplate().equals(this.Elytra)) {
+                        player.getInventory().setChestplate(null);
                     }
                 }
             }
@@ -93,18 +88,7 @@ public class ElytraListener implements Listener {
 
         if (glider.contains(uuid)) {
             event.setCancelled(true);
-            
-            int maxBoosts = Main.getPlugin().getConfig().getInt("maxBoostCount");
-            int currentBoosts = boostCount.getOrDefault(uuid, 0);
-            
-            // Wenn maxBoostCount -1 ist = unbegrenzt
-            if (maxBoosts == -1 || currentBoosts < maxBoosts) {
-                Vector velocity = player.getLocation().getDirection().multiply(2).add(new Vector(0, Double.parseDouble((Main.getPlugin().getConfig().getString("Boost"))), 0));
-                player.setVelocity(velocity);
-                boostCount.put(uuid, currentBoosts + 1);
-            } else {
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&', Main.getPlugin().getConfig().getString("Messages.BoostLimitReached")));
-            }
+            // Kein Boost mehr
         }
     }
 
@@ -116,18 +100,7 @@ public class ElytraListener implements Listener {
         if (event.getPlayer().getName().startsWith(Main.getPlugin().getConfig().getString("Geysermc.Prefix"))) {
             if (glider.contains(uuid)) {
                 event.setCancelled(true);
-                
-                int maxBoosts = Main.getPlugin().getConfig().getInt("maxBoostCount");
-                int currentBoosts = boostCount.getOrDefault(uuid, 0);
-                
-                // Wenn maxBoostCount -1 ist = unbegrenzt
-                if (maxBoosts == -1 || currentBoosts < maxBoosts) {
-                    Vector velocity = player.getLocation().getDirection().multiply(2).add(new Vector(0, Double.parseDouble((Main.getPlugin().getConfig().getString("Boost"))), 0));
-                    player.setVelocity(velocity);
-                    boostCount.put(uuid, currentBoosts + 1);
-                } else {
-                    player.sendMessage(ChatColor.translateAlternateColorCodes('&', Main.getPlugin().getConfig().getString("Messages.BoostLimitReached")));
-                }
+                // Kein Boost mehr
             }
         }
     }
@@ -135,7 +108,8 @@ public class ElytraListener implements Listener {
     @EventHandler
     public void onFlightToggle(PlayerToggleFlightEvent event) {
         UUID uuid = event.getPlayer().getUniqueId();
-        if (event.getPlayer().getGameMode() == GameMode.SURVIVAL && glider.contains(uuid)) event.setCancelled(true);
+        if (event.getPlayer().getGameMode() == GameMode.SURVIVAL && glider.contains(uuid))
+            event.setCancelled(true);
     }
 
     @EventHandler
@@ -143,7 +117,9 @@ public class ElytraListener implements Listener {
         if (event.getEntityType() == EntityType.PLAYER) {
             Player player = (Player) event.getEntity();
             UUID uuid = player.getUniqueId();
-            if (glider.contains(uuid)) event.setCancelled(true);
+            if (glider.contains(uuid))
+                event.setCancelled(true);
         }
     }
 }
+
